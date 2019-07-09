@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.facesignin.mapper.AdminMapper" >
+  <select id="getAdminOrgDetails" resultType="cn.facesignin.pojo.controller.AdminOrg">
+  	SELECT
+		organization.oid as oid,
+		organization.oname as oname,
+		organization.oemail as oemail,
+		organization.ocreate_time as ocreateTime,
+		organization.ostatus as ostatus,
+		COUNT(activity.aid) as num
+	FROM
+		organization,
+		activity
+	WHERE
+		organization.oid = activity.oid
+	GROUP BY activity.oid
+  </select>
+  <select id="getAdminUsers" resultType="cn.facesignin.pojo.controller.AdminUser">
+  	SELECT
+		`user`.uid,
+		`user`.uname,
+		count(signin_record.uid) as num
+	FROM
+		USER LEFT JOIN 
+		signin_record
+	on
+		`user`.uid = signin_record.uid
+	where `user`.uname like "%"#{like}"%"
+	GROUP BY `user`.uid
+  </select>
+  
+
+</mapper>

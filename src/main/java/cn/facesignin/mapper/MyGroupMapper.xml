@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.facesignin.mapper.MyGroupMapper" >
+  <resultMap id="BaseResultMap" type="cn.facesignin.pojo.MyGroup" >
+    <id column="gid" property="gid" jdbcType="INTEGER" />
+    <result column="gname" property="gname" jdbcType="VARCHAR" />
+    <result column="oid" property="oid" jdbcType="INTEGER" />
+    <result column="gstatus" property="gstatus" jdbcType="VARCHAR" />
+    <result column="gcreateTime" property="gcreatetime" jdbcType="TIMESTAMP" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    gid, gname, oid, gstatus, gcreateTime
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="cn.facesignin.pojo.MyGroupExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from my_group
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="getGroupList" resultMap="BaseResultMap" parameterType="java.lang.Integer">
+  	select * from my_group
+    where oid = #{oid,jdbcType=INTEGER}
+  </select>
+  <select id="getGidUsedNum" resultType="java.lang.Integer" parameterType="java.lang.Integer">
+  	select COUNT(*) as num from activity where gid = #{gid}
+  </select>
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from my_group
+    where gid = #{gid,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from my_group
+    where gid = #{gid,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="cn.facesignin.pojo.MyGroupExample" >
+    delete from my_group
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="cn.facesignin.pojo.MyGroup" >
+    insert into my_group (gid, gname, oid, 
+      gstatus, gcreateTime)
+    values (#{gid,jdbcType=INTEGER}, #{gname,jdbcType=VARCHAR}, #{oid,jdbcType=INTEGER}, 
+      #{gstatus,jdbcType=VARCHAR}, #{gcreatetime,jdbcType=TIMESTAMP})
+  </insert>
+  <select id="getUsersInGroup" parameterType="java.lang.Integer" resultType="cn.facesignin.pojo.User">
+  	SELECT
+		`user`.uid as uid,
+		uface_token as ufaceToken
+	FROM
+		USER,
+		user_join_group
+	WHERE
+		`user`.uid = user_join_group.uid
+	AND gid = #{gid,jdbcType=INTEGER}
+  </select>
+  <insert id="insertSelective" parameterType="cn.facesignin.pojo.MyGroup" >
+    insert into my_group
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="gid != null" >
+        gid,
+      </if>
+      <if test="gname != null" >
+        gname,
+      </if>
+      <if test="oid != null" >
+        oid,
+      </if>
+      <if test="gstatus != null" >
+        gstatus,
+      </if>
+      <if test="gcreatetime != null" >
+        gcreateTime,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="gid != null" >
+        #{gid,jdbcType=INTEGER},
+      </if>
+      <if test="gname != null" >
+        #{gname,jdbcType=VARCHAR},
+      </if>
+      <if test="oid != null" >
+        #{oid,jdbcType=INTEGER},
+      </if>
+      <if test="gstatus != null" >
+        #{gstatus,jdbcType=VARCHAR},
+      </if>
+      <if test="gcreatetime != null" >
+        #{gcreatetime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="cn.facesignin.pojo.MyGroupExample" resultType="java.lang.Integer" >
+    select count(*) from my_group
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update my_group
+    <set >
+      <if test="record.gid != null" >
+        gid = #{record.gid,jdbcType=INTEGER},
+      </if>
+      <if test="record.gname != null" >
+        gname = #{record.gname,jdbcType=VARCHAR},
+      </if>
+      <if test="record.oid != null" >
+        oid = #{record.oid,jdbcType=INTEGER},
+      </if>
+      <if test="record.gstatus != null" >
+        gstatus = #{record.gstatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.gcreatetime != null" >
+        gcreateTime = #{record.gcreatetime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update my_group
+    set gid = #{record.gid,jdbcType=INTEGER},
+      gname = #{record.gname,jdbcType=VARCHAR},
+      oid = #{record.oid,jdbcType=INTEGER},
+      gstatus = #{record.gstatus,jdbcType=VARCHAR},
+      gcreateTime = #{record.gcreatetime,jdbcType=TIMESTAMP}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="cn.facesignin.pojo.MyGroup" >
+    update my_group
+    <set>
+      <if test="gname != null" >
+        gname = #{gname,jdbcType=VARCHAR},
+      </if>
+      <if test="oid != null" >
+        oid = #{oid,jdbcType=INTEGER},
+      </if>
+      <if test="gstatus != null" >
+        gstatus = #{gstatus,jdbcType=VARCHAR},
+      </if>
+      <if test="gcreatetime != null" >
+        gcreateTime = #{gcreatetime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where gid = #{gid,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="cn.facesignin.pojo.MyGroup" >
+    update my_group
+    set gname = #{gname,jdbcType=VARCHAR},
+      oid = #{oid,jdbcType=INTEGER},
+      gstatus = #{gstatus,jdbcType=VARCHAR},
+      gcreateTime = #{gcreatetime,jdbcType=TIMESTAMP}
+    where gid = #{gid,jdbcType=INTEGER}
+  </update>
+</mapper>

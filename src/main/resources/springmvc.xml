@@ -1,0 +1,100 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" 
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+		http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+		http://www.springframework.org/schema/mvc
+		http://www.springframework.org/schema/mvc/spring-mvc-4.2.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-4.2.xsd
+		http://www.springframework.org/schema/aop
+		http://www.springframework.org/schema/aop/spring-aop-4.2.xsd
+		http://www.springframework.org/schema/tx
+		http://www.springframework.org/schema/tx/spring-tx-4.2.xsd
+		http://www.springframework.org/schema/task
+   		http://www.springframework.org/schema/task/spring-task-4.2.xsd">
+		<mvc:default-servlet-handler />
+		
+		<!-- 配置扫描 器 -->
+		<context:component-scan base-package="cn.facesignin.controller"/>
+		
+		<!-- 配置处理器映射器  适配器 -->
+		<mvc:annotation-driven>
+		    <mvc:message-converters register-defaults="true">
+		        <!-- 配置Fastjson支持 -->
+		        <bean class="com.alibaba.fastjson.support.spring.FastJsonHttpMessageConverter">
+		            <property name="supportedMediaTypes">
+		                <list>
+		                    <value>text/html;charset=UTF-8</value>
+		                    <value>application/json</value>
+		                </list>
+		            </property>
+		            <property name="features">
+		                <list>
+		                    <value>WriteMapNullValue</value>
+		                    <value>QuoteFieldNames</value>
+		                </list>
+		            </property>
+		        </bean>
+		    </mvc:message-converters>
+		</mvc:annotation-driven>
+		
+		<!-- 配置视图解释器 jsp -->
+		<bean id="jspViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+			<property name="prefix" value="/WEB-INF/"/>
+			<property name="suffix" value=".jsp"/>
+		</bean>
+		
+		<bean id="multipartResolver"
+			class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+			<!-- 设置上传文件的最大尺寸为5MB -->
+			<property name="maxUploadSize">
+				<value>5242880</value>
+			</property>
+		</bean>
+
+		<!-- 拦截器  -->
+		<mvc:interceptors>
+			<!-- 自动登录拦截器 -->
+			<mvc:interceptor>
+				<mvc:mapping path="/**" />
+				<bean class="cn.facesignin.Interceptor.AutoLoginInterceptor" />
+			</mvc:interceptor>
+			
+			<!-- 访问控制拦截器 -->
+			<mvc:interceptor>
+				<mvc:mapping path="/org/**" />
+				<mvc:mapping path="/ui/organization.action" />
+				<mvc:exclude-mapping path="/activity/initMobileVerify.action"/>
+				<bean class="cn.facesignin.Interceptor.OrgAccessControlInterceptor" />
+			</mvc:interceptor>
+			
+			<mvc:interceptor>
+				<mvc:mapping path="/user/**" />
+				<mvc:mapping path="/ui/user.action" />
+				<bean class="cn.facesignin.Interceptor.UserAccessControlInterceptor" />
+			</mvc:interceptor>
+
+			<mvc:interceptor>
+				<mvc:mapping path="/activity/initMobileVerify.action" />
+				<bean class="cn.facesignin.Interceptor.MobileVerifyInterceptor" />
+			</mvc:interceptor>
+
+			<!-- 活动和验证界面拦截器 -->
+			<mvc:interceptor>
+				<mvc:mapping path="/activity/**" />
+				<mvc:mapping path="/ui/activity.action" />
+				<mvc:mapping path="/ui/verify.action" />
+				<mvc:exclude-mapping path="/activity/activitySession.action"/>
+				<mvc:exclude-mapping path="/activity/initMobileVerify.action"/>
+				<mvc:exclude-mapping path="/activity/echoErrorJSPInfo.action"/>
+				<mvc:exclude-mapping path="/activity/qrcodes.action"/>
+				<bean class="cn.facesignin.Interceptor.ActivityInterceptor" />
+			</mvc:interceptor>
+		</mvc:interceptors>
+		
+</beans>
