@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.facesignin.mapper.OrganizationMapper" >
+  <resultMap id="BaseResultMap" type="cn.facesignin.pojo.Organization" >
+    <id column="oid" property="oid" jdbcType="INTEGER" />
+    <result column="opwd" property="opwd" jdbcType="VARCHAR" />
+    <result column="oemail" property="oemail" jdbcType="VARCHAR" />
+    <result column="oname" property="oname" jdbcType="VARCHAR" />
+    <result column="ocreate_time" property="ocreateTime" jdbcType="TIMESTAMP" />
+    <result column="oowner" property="oowner" jdbcType="VARCHAR" />
+    <result column="oowner_email" property="oownerEmail" jdbcType="VARCHAR" />
+    <result column="ostatus" property="ostatus" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    oid, opwd, oemail, oname, ocreate_time, oowner, oowner_email, ostatus
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="cn.facesignin.pojo.OrganizationExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from organization
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <select id="getGroupDetail" resultType="cn.facesignin.pojo.controller.GroupDetail" parameterType="java.lang.Integer">
+  	SELECT
+		my_group.gid AS gid,
+		gname,
+		gcreateTime,
+		COUNT(user_join_group.gid) AS num
+	FROM
+		my_group
+	LEFT JOIN user_join_group ON user_join_group.gid = my_group.gid
+	WHERE
+		my_group.oid = #{oid,jdbcType=INTEGER}
+	GROUP BY
+		my_group.gid
+	ORDER BY
+		gcreateTime DESC
+  </select>
+  
+  <select id="selectByPrimaryKey" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+    select 
+    <include refid="Base_Column_List" />
+    from organization
+    where oid = #{oid,jdbcType=INTEGER}
+  </select>
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer" >
+    delete from organization
+    where oid = #{oid,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByExample" parameterType="cn.facesignin.pojo.OrganizationExample" >
+    delete from organization
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="cn.facesignin.pojo.Organization" >
+    insert into organization (oid, opwd, oemail, 
+      oname, ocreate_time, oowner, 
+      oowner_email, ostatus)
+    values (#{oid,jdbcType=INTEGER}, #{opwd,jdbcType=VARCHAR}, #{oemail,jdbcType=VARCHAR}, 
+      #{oname,jdbcType=VARCHAR}, #{ocreateTime,jdbcType=TIMESTAMP}, #{oowner,jdbcType=VARCHAR}, 
+      #{oownerEmail,jdbcType=VARCHAR}, #{ostatus,jdbcType=VARCHAR})
+  </insert>
+  <insert id="insertSelective" parameterType="cn.facesignin.pojo.Organization" >
+    insert into organization
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="oid != null" >
+        oid,
+      </if>
+      <if test="opwd != null" >
+        opwd,
+      </if>
+      <if test="oemail != null" >
+        oemail,
+      </if>
+      <if test="oname != null" >
+        oname,
+      </if>
+      <if test="ocreateTime != null" >
+        ocreate_time,
+      </if>
+      <if test="oowner != null" >
+        oowner,
+      </if>
+      <if test="oownerEmail != null" >
+        oowner_email,
+      </if>
+      <if test="ostatus != null" >
+        ostatus,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="oid != null" >
+        #{oid,jdbcType=INTEGER},
+      </if>
+      <if test="opwd != null" >
+        #{opwd,jdbcType=VARCHAR},
+      </if>
+      <if test="oemail != null" >
+        #{oemail,jdbcType=VARCHAR},
+      </if>
+      <if test="oname != null" >
+        #{oname,jdbcType=VARCHAR},
+      </if>
+      <if test="ocreateTime != null" >
+        #{ocreateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="oowner != null" >
+        #{oowner,jdbcType=VARCHAR},
+      </if>
+      <if test="oownerEmail != null" >
+        #{oownerEmail,jdbcType=VARCHAR},
+      </if>
+      <if test="ostatus != null" >
+        #{ostatus,jdbcType=VARCHAR},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="cn.facesignin.pojo.OrganizationExample" resultType="java.lang.Integer" >
+    select count(*) from organization
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <select id="getOrgActivityDetail"  resultType="cn.facesignin.pojo.controller.OrgActivity" parameterType="java.lang.Integer">
+  SELECT
+		activity.aid AS aid,
+		activity.aname AS aname,
+		activity.astart_time AS astartTime,
+		activity.aend_time AS aendTime,
+		COUNT(signin_record.aid) AS num,
+		activity.astatus AS astatus,
+		my_group.gname AS gname,
+		activity.acharge_man as achargeMan,
+		activity.acontact as acontact
+	FROM
+		my_group,
+		activity LEFT JOIN signin_record ON activity.aid = signin_record.aid
+	WHERE
+		my_group.gid = activity.gid AND	activity.oid = #{oid,jdbcType=INTEGER}
+	GROUP BY
+		activity.aid
+	ORDER BY
+		astart_time DESC
+  </select>
+  <select id="getAdminActDetails" resultType="cn.facesignin.pojo.controller.AdminAct">
+ 	SELECT
+		activity.aid AS aid,
+		activity.aname AS aname,
+		activity.astart_time AS astartTime,
+		activity.aend_time AS aendTime,
+		COUNT(signin_record.aid) AS num,
+		activity.astatus AS astatus,
+		my_group.gname AS gname,
+		organization.oname as oname
+	FROM
+		my_group,
+		activity LEFT JOIN signin_record ON activity.aid = signin_record.aid,
+		organization
+	WHERE
+		my_group.gid = activity.gid and organization.oid = activity.oid and activity.aname like "%"#{like}"%"
+	GROUP BY
+		activity.aid
+	ORDER BY
+		astart_time DESC
+  </select>
+  <select id="selectByLikeAname"  resultType="cn.facesignin.pojo.controller.OrgActivity">
+  SELECT
+		activity.aid AS aid,
+		activity.aname AS aname,
+		activity.astart_time AS astartTime,
+		activity.aend_time AS aendTime,
+		COUNT(signin_record.aid) AS num,
+		activity.astatus AS astatus,
+		my_group.gname AS gname,
+		activity.acharge_man as achargeMan,
+		activity.acontact as acontact
+	FROM
+		my_group,
+		activity LEFT JOIN signin_record ON activity.aid = signin_record.aid
+	WHERE
+		my_group.gid = activity.gid AND	activity.oid = #{oid,jdbcType=INTEGER} AND activity.aname like "%"#{aname}"%"
+	GROUP BY
+		activity.aid
+	ORDER BY
+		astart_time DESC
+  </select>
+  <select id="selectOrgByLikeName" resultType="cn.facesignin.pojo.controller.AdminOrg">
+  	SELECT
+		organization.oid as oid,
+		organization.oname as oname,
+		organization.oemail as oemail,
+		organization.ocreate_time as ocreateTime,
+		organization.ostatus as ostatus,
+		COUNT(activity.aid) as num
+	FROM
+		organization,
+		activity
+	WHERE
+		organization.oname like "%"#{like}"%" AND organization.oid = activity.oid
+	GROUP BY activity.oid
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update organization
+    <set >
+      <if test="record.oid != null" >
+        oid = #{record.oid,jdbcType=INTEGER},
+      </if>
+      <if test="record.opwd != null" >
+        opwd = #{record.opwd,jdbcType=VARCHAR},
+      </if>
+      <if test="record.oemail != null" >
+        oemail = #{record.oemail,jdbcType=VARCHAR},
+      </if>
+      <if test="record.oname != null" >
+        oname = #{record.oname,jdbcType=VARCHAR},
+      </if>
+      <if test="record.ocreateTime != null" >
+        ocreate_time = #{record.ocreateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.oowner != null" >
+        oowner = #{record.oowner,jdbcType=VARCHAR},
+      </if>
+      <if test="record.oownerEmail != null" >
+        oowner_email = #{record.oownerEmail,jdbcType=VARCHAR},
+      </if>
+      <if test="record.ostatus != null" >
+        ostatus = #{record.ostatus,jdbcType=VARCHAR},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update organization
+    set oid = #{record.oid,jdbcType=INTEGER},
+      opwd = #{record.opwd,jdbcType=VARCHAR},
+      oemail = #{record.oemail,jdbcType=VARCHAR},
+      oname = #{record.oname,jdbcType=VARCHAR},
+      ocreate_time = #{record.ocreateTime,jdbcType=TIMESTAMP},
+      oowner = #{record.oowner,jdbcType=VARCHAR},
+      oowner_email = #{record.oownerEmail,jdbcType=VARCHAR},
+      ostatus = #{record.ostatus,jdbcType=VARCHAR}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByPrimaryKeySelective" parameterType="cn.facesignin.pojo.Organization" >
+    update organization
+    <set >
+      <if test="opwd != null" >
+        opwd = #{opwd,jdbcType=VARCHAR},
+      </if>
+      <if test="oemail != null" >
+        oemail = #{oemail,jdbcType=VARCHAR},
+      </if>
+      <if test="oname != null" >
+        oname = #{oname,jdbcType=VARCHAR},
+      </if>
+      <if test="ocreateTime != null" >
+        ocreate_time = #{ocreateTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="oowner != null" >
+        oowner = #{oowner,jdbcType=VARCHAR},
+      </if>
+      <if test="oownerEmail != null" >
+        oowner_email = #{oownerEmail,jdbcType=VARCHAR},
+      </if>
+      <if test="ostatus != null" >
+        ostatus = #{ostatus,jdbcType=VARCHAR},
+      </if>
+    </set>
+    where oid = #{oid,jdbcType=INTEGER}
+  </update>
+  <update id="updateByPrimaryKey" parameterType="cn.facesignin.pojo.Organization" >
+    update organization
+    set opwd = #{opwd,jdbcType=VARCHAR},
+      oemail = #{oemail,jdbcType=VARCHAR},
+      oname = #{oname,jdbcType=VARCHAR},
+      ocreate_time = #{ocreateTime,jdbcType=TIMESTAMP},
+      oowner = #{oowner,jdbcType=VARCHAR},
+      oowner_email = #{oownerEmail,jdbcType=VARCHAR},
+      ostatus = #{ostatus,jdbcType=VARCHAR}
+    where oid = #{oid,jdbcType=INTEGER}
+  </update>
+</mapper>

@@ -1,23 +1,26 @@
 package cn.facesignin.controller;
 
+import static org.hamcrest.CoreMatchers.sameInstance;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import cn.facesignin.service.VerifyService;
 
 @Controller
 @RequestMapping("/ui")
 public class UiController {
 	
-	@Autowired
-	private AmqpTemplate amqpTemplate;
-	
 	@RequestMapping("/login")
 	public String login() throws Exception{
-		amqpTemplate.convertAndSend("mq.exChange", "mq.test.send", "hello world!");
 		return "login";
 	}
 	@RequestMapping("/uregister")
@@ -52,12 +55,33 @@ public class UiController {
 	public String error() throws Exception{
 		return "error";
 	}
+	
+	@Autowired
+	private RedisTemplate<Object, Object> redisTemplate;
+	
+	@Autowired
+	private VerifyService verifyService;
+	
 	@RequestMapping("/mobileVerify")
-	public String mobileVerify() throws Exception{
+	public String mobileVerify(String aid, String admin) throws Exception{
+		
+		String strAid = aid + "`" + admin;
+		
+		if(redisTemplate.hasKey(strAid)) {
+			
+			Map<Object, Object> entries = redisTemplate.opsForHash().entries(strAid);
+			
+			verifyService.saveVerifyRecordToDB(entries);
+			
+			redisTemplate.delete(strAid);
+		}
+		
+		Object object = redisTemplate.opsForValue().get(aid);
+		if(object == null) {
+			redisTemplate.opsForValue().set(aid, 1);
+		}else
+			redisTemplate.opsForValue().increment(aid, 1);
+		
 		return "mobileVerify";
-	}
-	@RequestMapping("/testmq")
-	public void Testmq() {
-		amqpTemplate.convertAndSend("mq.asdfExChange", "mq.asdf.send", "hello world!");
 	}
 }

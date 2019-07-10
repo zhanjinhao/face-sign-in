@@ -4,26 +4,31 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
+import com.alibaba.fastjson.JSON;
 
 import cn.facesignin.constant.FaceppConfig;
 import cn.facesignin.constant.ImgFilePathConfig;
 import cn.facesignin.constant.Type;
 import cn.facesignin.face.FaceUtils;
-import cn.facesignin.mapper.ActivityMapper;
 import cn.facesignin.mapper.SigninRecordMapper;
 import cn.facesignin.pojo.Activity;
 import cn.facesignin.pojo.SigninRecord;
 import cn.facesignin.pojo.SigninRecordExample;
 import cn.facesignin.pojo.SigninRecordExample.Criteria;
 import cn.facesignin.pojo.User;
-import cn.facesignin.service.ActivityService;
 import cn.facesignin.service.SignInRecordService;
 import cn.facesignin.service.VerifyService;
 import cn.facesignin.utils.FileUtils;
@@ -40,7 +45,7 @@ public class VerifyServiceImpl implements VerifyService {
 	private SignInRecordService signInRecordService;
 	
 	@Autowired
-	private ActivityService activityService;
+	private RedisTemplate<Object, Object> redisTemplate;
 	
 	@Override
 	/**
@@ -110,50 +115,57 @@ public class VerifyServiceImpl implements VerifyService {
 	/**
 	 * 把符合要求的用户写入数据库中存储
 	 */
-	public void userSignInDB(List<User> users, Integer aid) {
+	public void userSignInDB(String admin, List<User> users, Activity activity) {
+		
+		Integer aid = activity.getAid();
+		
+		Map<Object, Object> map = null;
+		
+		String strAid = aid.toString() + "`" + admin;
+		
+		if(redisTemplate.hasKey(strAid)) {
+			map = redisTemplate.opsForHash().entries(strAid);
+		} else {
+			map = new HashMap<>();
+			redisTemplate.opsForHash().putAll(strAid, map);
+		}
+
+		Date now = new Date();
+		
 		Iterator<User> iterator = users.iterator();
-		
-		Activity activity = activityService.getActivityByAid(aid);
-		System.out.println(activity);
-		
-		Date aendTime = activity.getAendTime();
-		Date now = new Date(System.currentTimeMillis());
-		//to > 0：当前时间比结束时间大，签到状态设置为迟到
-		//to < 0：当前时间比结束时间小，签到状态设置为成功
-		int to = now.compareTo(aendTime);  
 		
 		while(iterator.hasNext()) {
 			User user = iterator.next();
-			System.out.println(user);
-			//select by uid and aid
-			System.out.println("VerifyServiceImpl.userSignInDB  ==>  " + user.getUid() + "   " + aid);
-			
-			SigninRecord record = signInRecordService.getRecordByAidAndUid(user.getUid(), aid);
-			
-			if(record == null) {
+ 
+			String string = (String)map.get(user.getUid());
+			SigninRecord object = JSON.parseObject(string, SigninRecord.class);
+			if(map.containsKey(user.getUid())) {
+
+				object.setSoutTime(now);
+				redisTemplate.opsForHash().delete(strAid, user.getUid());
+				redisTemplate.opsForHash().put(strAid, user.getUid(), JSON.toJSONString(object));
+
+			}else {
+
 				SigninRecord recordNow = new SigninRecord();
 				recordNow.setAid(aid);
 				recordNow.setSinTime(new Date());
 				recordNow.setSoutTime(new Date());
 				recordNow.setScheckType(Type.SIGNIN_RECORD_SCHECK_TYPE_IMG);
-				
+				//to > 0：当前时间比结束时间大，签到状态设置为迟到
+				//to < 0：当前时间比结束时间小，签到状态设置为成功
+				Date aendTime = activity.getAendTime();
+				int to = now.compareTo(aendTime);
 				if(to > 0)
 					recordNow.setSstatus(Type.SIGNIN_RECORD_SSTATUS_LATE);
 				else
 					recordNow.setSstatus(Type.SIGNIN_RECORD_SSTATUS_NORMAL);
-				
-				recordNow.setUid(user.getUid());
-				recordNow.setSimgPath(user.getUid() + ".jpg");
-				signinRecordMapper.insert(recordNow);
-			}else {
-				SigninRecordExample example = new SigninRecordExample();
-				Criteria criteria = example.createCriteria();
-				criteria.andAidEqualTo(aid);
-				criteria.andUidEqualTo(user.getUid());
-				record.setSoutTime(new Date());
-				signinRecordMapper.updateByExample(record, example);
+				redisTemplate.opsForHash().put(strAid, user.getUid(), JSON.toJSONString(recordNow));
 			}
+
 		}
+
+		System.out.println(" =====> " + redisTemplate.opsForHash().entries(strAid));
 	}
 
 	@Override
@@ -167,7 +179,6 @@ public class VerifyServiceImpl implements VerifyService {
 			User user = iterator.next();
 			String path = ImgFilePathConfig.ROOT + File.separator + ImgFilePathConfig.VERIFY + 
 					File.separator + aid + File.separator + user.getUid() +".jpg";
-			System.out.println("path  ==>  " + path);
 			File forceCreateFile = null;
 			try {
 				forceCreateFile = FileUtils.forceCreateFile(path);
@@ -177,6 +188,35 @@ public class VerifyServiceImpl implements VerifyService {
 			FileUtils.copyFile(file, forceCreateFile);
 		}
 		file.delete();
+	}
+
+	@Override
+	public void saveVerifyRecordToDB(Map<Object, Object> map) {
+		
+		Set<Entry<Object,Object>> entrySet = map.entrySet();
+		Iterator<Entry<Object, Object>> iterator = entrySet.iterator();
+		while(iterator.hasNext()) {
+			Entry<Object, Object> key = iterator.next();
+			String str = (String)map.get(key);
+			
+			SigninRecord record = JSON.parseObject(str, SigninRecord.class);
+			
+			SigninRecord recordFromDB = signInRecordService.getRecordByAidAndUid(record.getUid(), record.getAid());
+			
+			if(recordFromDB == null) {
+				signInRecordService.insert(record);
+			}else {
+				
+				SigninRecordExample example = new SigninRecordExample();
+				Criteria createCriteria = example.createCriteria();
+				createCriteria.andAidEqualTo(record.getAid());
+				createCriteria.andUidEqualTo(record.getUid());
+				
+				signinRecordMapper.updateByExample(record, example);
+			}
+		}
+		
+		
 	}
 	
 }

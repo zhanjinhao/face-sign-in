@@ -20,6 +20,19 @@ import cn.facesignin.constant.OpencvConfig;
 
 public class OpencvUtils {
 	
+	private static OpencvUtils opencvUtils;
+	
+	static {
+		opencvUtils = new OpencvUtils();
+	}
+	
+	private OpencvUtils() {
+	}
+	
+	public static OpencvUtils getInstance() {
+		return opencvUtils;
+	}
+	
 	/**
 	 * 获得人脸矩形框
 	 * @param abName 绝对路径
@@ -37,7 +50,7 @@ public class OpencvUtils {
 		faceDetector.detectMultiScale(image, faceDetections);
 		return Arrays.asList(faceDetections.toArray());
 	}
-	
+                                                                                                                                                                                                                                                                                                                                    	
 	public File imageCut(String imagePath, String outFilePath, Rect rect) {
 		Mat image = Imgcodecs.imread(imagePath);
 		Mat sub = image.submat(rect); // Mat sub = new Mat(image, rect);

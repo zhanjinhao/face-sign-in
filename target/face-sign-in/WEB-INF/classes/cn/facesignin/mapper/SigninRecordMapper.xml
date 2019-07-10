@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.facesignin.mapper.SigninRecordMapper" >
+  <resultMap id="BaseResultMap" type="cn.facesignin.pojo.SigninRecord" >
+    <result column="aid" property="aid" jdbcType="INTEGER" />
+    <result column="uid" property="uid" jdbcType="VARCHAR" />
+    <result column="sin_time" property="sinTime" jdbcType="TIMESTAMP" />
+    <result column="sout_time" property="soutTime" jdbcType="TIMESTAMP" />
+    <result column="simg_path" property="simgPath" jdbcType="VARCHAR" />
+    <result column="scheck_type" property="scheckType" jdbcType="VARCHAR" />
+    <result column="sstatus" property="sstatus" jdbcType="VARCHAR" />
+    <result column="confidence" property="confidence" jdbcType="DOUBLE" />
+  </resultMap>
+  <sql id="Example_Where_Clause" >
+    <where >
+      <foreach collection="oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Update_By_Example_Where_Clause" >
+    <where >
+      <foreach collection="example.oredCriteria" item="criteria" separator="or" >
+        <if test="criteria.valid" >
+          <trim prefix="(" suffix=")" prefixOverrides="and" >
+            <foreach collection="criteria.criteria" item="criterion" >
+              <choose >
+                <when test="criterion.noValue" >
+                  and ${criterion.condition}
+                </when>
+                <when test="criterion.singleValue" >
+                  and ${criterion.condition} #{criterion.value}
+                </when>
+                <when test="criterion.betweenValue" >
+                  and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                </when>
+                <when test="criterion.listValue" >
+                  and ${criterion.condition}
+                  <foreach collection="criterion.value" item="listItem" open="(" close=")" separator="," >
+                    #{listItem}
+                  </foreach>
+                </when>
+              </choose>
+            </foreach>
+          </trim>
+        </if>
+      </foreach>
+    </where>
+  </sql>
+  <sql id="Base_Column_List" >
+    aid, uid, sin_time, sout_time, simg_path, scheck_type, sstatus, confidence
+  </sql>
+  <select id="selectByExample" resultMap="BaseResultMap" parameterType="cn.facesignin.pojo.SigninRecordExample" >
+    select
+    <if test="distinct" >
+      distinct
+    </if>
+    <include refid="Base_Column_List" />
+    from signin_record
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+    <if test="orderByClause != null" >
+      order by ${orderByClause}
+    </if>
+  </select>
+  <delete id="deleteByExample" parameterType="cn.facesignin.pojo.SigninRecordExample" >
+    delete from signin_record
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </delete>
+  <insert id="insert" parameterType="cn.facesignin.pojo.SigninRecord" >
+    insert into signin_record (aid, uid, sin_time, 
+      sout_time, simg_path, scheck_type, 
+      sstatus, confidence)
+    values (#{aid,jdbcType=INTEGER}, #{uid,jdbcType=VARCHAR}, #{sinTime,jdbcType=TIMESTAMP}, 
+      #{soutTime,jdbcType=TIMESTAMP}, #{simgPath,jdbcType=VARCHAR}, #{scheckType,jdbcType=VARCHAR}, 
+      #{sstatus,jdbcType=VARCHAR}, #{confidence,jdbcType=DOUBLE})
+  </insert>
+  <insert id="insertSelective" parameterType="cn.facesignin.pojo.SigninRecord" >
+    insert into signin_record
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="aid != null" >
+        aid,
+      </if>
+      <if test="uid != null" >
+        uid,
+      </if>
+      <if test="sinTime != null" >
+        sin_time,
+      </if>
+      <if test="soutTime != null" >
+        sout_time,
+      </if>
+      <if test="simgPath != null" >
+        simg_path,
+      </if>
+      <if test="scheckType != null" >
+        scheck_type,
+      </if>
+      <if test="sstatus != null" >
+        sstatus,
+      </if>
+      <if test="confidence != null" >
+        confidence,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="aid != null" >
+        #{aid,jdbcType=INTEGER},
+      </if>
+      <if test="uid != null" >
+        #{uid,jdbcType=VARCHAR},
+      </if>
+      <if test="sinTime != null" >
+        #{sinTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="soutTime != null" >
+        #{soutTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="simgPath != null" >
+        #{simgPath,jdbcType=VARCHAR},
+      </if>
+      <if test="scheckType != null" >
+        #{scheckType,jdbcType=VARCHAR},
+      </if>
+      <if test="sstatus != null" >
+        #{sstatus,jdbcType=VARCHAR},
+      </if>
+      <if test="confidence != null" >
+        #{confidence,jdbcType=DOUBLE},
+      </if>
+    </trim>
+  </insert>
+  <select id="countByExample" parameterType="cn.facesignin.pojo.SigninRecordExample" resultType="java.lang.Integer" >
+    select count(*) from signin_record
+    <if test="_parameter != null" >
+      <include refid="Example_Where_Clause" />
+    </if>
+  </select>
+  <update id="updateByExampleSelective" parameterType="map" >
+    update signin_record
+    <set >
+      <if test="record.aid != null" >
+        aid = #{record.aid,jdbcType=INTEGER},
+      </if>
+      <if test="record.uid != null" >
+        uid = #{record.uid,jdbcType=VARCHAR},
+      </if>
+      <if test="record.sinTime != null" >
+        sin_time = #{record.sinTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.soutTime != null" >
+        sout_time = #{record.soutTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="record.simgPath != null" >
+        simg_path = #{record.simgPath,jdbcType=VARCHAR},
+      </if>
+      <if test="record.scheckType != null" >
+        scheck_type = #{record.scheckType,jdbcType=VARCHAR},
+      </if>
+      <if test="record.sstatus != null" >
+        sstatus = #{record.sstatus,jdbcType=VARCHAR},
+      </if>
+      <if test="record.confidence != null" >
+        confidence = #{record.confidence,jdbcType=DOUBLE},
+      </if>
+    </set>
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+  <update id="updateByExample" parameterType="map" >
+    update signin_record
+    set aid = #{record.aid,jdbcType=INTEGER},
+      uid = #{record.uid,jdbcType=VARCHAR},
+      sin_time = #{record.sinTime,jdbcType=TIMESTAMP},
+      sout_time = #{record.soutTime,jdbcType=TIMESTAMP},
+      simg_path = #{record.simgPath,jdbcType=VARCHAR},
+      scheck_type = #{record.scheckType,jdbcType=VARCHAR},
+      sstatus = #{record.sstatus,jdbcType=VARCHAR},
+      confidence = #{record.confidence,jdbcType=DOUBLE}
+    <if test="_parameter != null" >
+      <include refid="Update_By_Example_Where_Clause" />
+    </if>
+  </update>
+</mapper>

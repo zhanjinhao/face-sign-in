@@ -1,16 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+    xmlns:context="http://www.springframework.org/schema/context"
     xsi:schemaLocation="http://www.springframework.org/schema/beans
      http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
      http://www.springframework.org/schema/rabbit
-     http://www.springframework.org/schema/rabbit/spring-rabbit-1.2.xsd">
+     http://www.springframework.org/schema/rabbit/spring-rabbit-1.2.xsd
+     http://www.springframework.org/schema/context
+     http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 
     <bean id="rabbitmqListener" class="cn.facesignin.listener.RabbitmqListener"></bean>
 
     <!--配置connection-factory，指定连接rabbit server参数 -->
     <rabbit:connection-factory id="connectionFactory"
-        username="facesignin" password="facesignin" host="47.93.53.162" port="5672" virtual-host="/facesignin" />
+        username="facesignin" 
+        password="facesignin" 
+        host="47.93.53.162" 
+        port="5672" 
+        virtual-host="/facesignin" />
 
     <!--通过指定下面的admin信息，当前producer中的exchange和queue会在rabbitmq服务器上自动生成 -->
     <rabbit:admin id="connectAdmin" connection-factory="connectionFactory" />

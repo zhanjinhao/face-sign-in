@@ -47,7 +47,6 @@ cn\facesignin\pojo\UserJoinGroupExample$Criterion.class
 cn\facesignin\utils\DownloadUtils.class
 cn\facesignin\pojo\UserJoinGroup.class
 cn\facesignin\controller\AdminController.class
-cn\facesignin\thread\Verify.class
 cn\facesignin\pojo\controller\GroupInfo.class
 cn\facesignin\pojo\MyGroup.class
 cn\facesignin\pojo\SigninRecordExample.class

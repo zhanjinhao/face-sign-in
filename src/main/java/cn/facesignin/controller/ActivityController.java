@@ -1,5 +1,7 @@
 package cn.facesignin.controller;
 
+import static org.hamcrest.CoreMatchers.nullValue;
+
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -11,8 +13,10 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,8 +25,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.opencv.core.Rect;
 import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -30,7 +36,9 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.alibaba.fastjson.JSON;
+import com.rabbitmq.client.AMQP.Channel.Open;
 
+import cn.facesignin.constant.ImgFilePathConfig;
 import cn.facesignin.constant.ServerConfig;
 import cn.facesignin.constant.ThreadPoolConfig;
 import cn.facesignin.entity.PageResult;
@@ -50,7 +58,7 @@ import cn.facesignin.service.SignInRecordService;
 import cn.facesignin.service.UserJoinGroupService;
 import cn.facesignin.service.UserService;
 import cn.facesignin.service.VerifyService;
-import cn.facesignin.thread.Verify;
+import cn.facesignin.utils.OpencvUtils;
 import cn.facesignin.utils.QrCodeUtil;
 import cn.facesignin.utils.ZipUtils;
 
@@ -207,6 +215,9 @@ public class ActivityController {
 		return map;
 	}
 	
+	@Autowired
+	private RedisTemplate<Object, Object> redisTemplate;
+	
 	@RequestMapping("/initMobileVerify")
 	public void initMobileVerify(@RequestParam("aid")Integer aid, @RequestParam("email")String email, @RequestParam("time")long time,
 			HttpServletResponse response, HttpServletRequest request) throws Exception{
@@ -222,13 +233,13 @@ public class ActivityController {
 		Organization organization = orgService.selectOrgByEmail(email);
 		Map map = new HashMap<>();
 		
-		Organization oldOrg = (Organization)session.getAttribute("org");
-		if(oldOrg != null && oldOrg.getOemail().equals(email)) {
+		Organization org = (Organization)session.getAttribute("org");
+		if(org != null && org.getOemail().equals(email)) {
 			session.setAttribute("aid", aid);
-			response.sendRedirect(request.getContextPath() + "/ui/mobileVerify.action");
+			response.sendRedirect(request.getContextPath() + "/ui/mobileVerify.action?aid="+aid+"&admin="+org.getOemail());
 			return;
 		}
-			
+
 		try {
 			//璁剧疆org
 			session.setAttribute("org", organization);
@@ -250,7 +261,7 @@ public class ActivityController {
 			return;
 		}
 		
-		response.sendRedirect(request.getContextPath() + "/ui/mobileVerify.action");
+		response.sendRedirect(request.getContextPath() + "/ui/mobileVerify.action?aid="+aid +"&admin="+user.getUid());
 	}
 	
 	@RequestMapping("/initVerify")
@@ -281,19 +292,74 @@ public class ActivityController {
 		return map;
 	}
 	
+	private OpencvUtils opencvUtils = OpencvUtils.getInstance();
+	
 	@RequestMapping("/upload")
 	public void verity(@RequestParam("file") MultipartFile file, 
 			@RequestParam("aid")Integer aid, HttpServletRequest request) {
-		
+
 		File tempSavedfile = verifyService.tempSaveFile(file, aid);
 		HttpSession session = request.getSession();
-		
+		Activity activity = activityService.getActivityByAid(aid);
 		Entity entity = new Entity();
-		entity.setAid(aid);
+		entity.setActivity(activity);
 		entity.setFilePath(tempSavedfile.getAbsolutePath());
 		entity.setUsers((List<User>) session.getAttribute("userList"));
 		
+		User user = (User)session.getAttribute("user");
+		
+		String admin = null;
+		
+		if(user == null) {
+			Organization org = (Organization)session.getAttribute("org");
+			admin = org.getOemail();
+		}else
+			admin = user.getUid();
+		
+		
 		String str = JSON.toJSONString(entity);
+		
+//		Activity activity = entity.getActivity();
+//		Integer aid = activity.getAid();
+
+		List<User> userList = entity.getUsers();
+
+		String filePath = entity.getFilePath();
+
+		// 获得人脸矩形框集合
+		List<Rect> rects = opencvUtils.getFaceRects(filePath);
+
+		System.out.println("rectsNum  ==>   " + rects.size());
+
+//		OpencvUtils.enlargeRects(filePath, rects, 10);
+
+		Iterator<Rect> iterator = rects.iterator();
+
+		// 遍历每一个人脸
+		while (iterator.hasNext()) {
+			Rect rect = iterator.next();
+
+			System.out.println(rect);
+
+			// 原始图片中的人脸切出来
+			File imageCut = opencvUtils.imageCut(filePath, ImgFilePathConfig.ROOT + File.separator
+					+ ImgFilePathConfig.VERIFY + File.separator + aid + File.separator + UUID.randomUUID() + ".jpg",
+					rect);
+
+			List<User> users = verifyService.verify(imageCut, userList);
+
+			verifyService.userSignInDB(admin, users, activity);
+
+			File imageMark = opencvUtils.imageMark(filePath, ImgFilePathConfig.ROOT + File.separator
+					+ ImgFilePathConfig.VERIFY + File.separator + aid + File.separator + UUID.randomUUID() + ".jpg",
+					rect);
+			
+			verifyService.saveFile(imageMark, users, aid);
+
+			imageCut.delete();
+			imageMark.delete();
+
+		}
 		
 		amqpTemplate.convertAndSend("mq.exChange", "mq.upload.send", str);
 		
@@ -339,29 +405,6 @@ public class ActivityController {
 		map.put("info", "aaaaaaaaaa");
 		
 		return map;
-	}
-	
-	@RequestMapping("testPath")
-	public void testPath(HttpServletRequest request) {
-		
-		String basePath = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort()
-				+ request.getContextPath();
-		
-		System.out.println(basePath);
-		
-		System.out.println(request.getRequestURL());
-		System.out.println(request.getScheme());
-		System.out.println(request.getServletPath());
-		System.out.println(request.getServerPort());
-		System.out.println(request.getServerName());
-		System.out.println(request.getRequestURI());
-		
-		System.out.println(request.getLocalAddr());
-		System.out.println(request.getLocalName());
-		System.out.println(request.getLocalPort());
-		System.out.println(request.getPathInfo());
-		System.out.println(request.getProtocol());
-		
 	}
 	
 	@RequestMapping("/qrcodes")
